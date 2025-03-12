@@ -7,21 +7,13 @@ on:
     branches: [ "lab1", "lab2" ]
 
 jobs:
-  build_and_test:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Set up Docker Compose
-        uses: docker/setup-compose-action@v1
+      - uses: actions/checkout@v4
 
-      - name: Build and start services
-        run: |
-          docker-compose -f docker-compose.yml up --build -d
-
-
-      - name: Wait for services to be ready
-        run: |
-          docker-compose exec backend curl -f http://localhost || exit 1
-          docker-compose exec nginx curl -f http://localhost || exit 1
-
-      - name: Tear down the services
-        run: docker-compose down
+      - name: Run docker compose
+        uses: hoverkraft-tech/compose-action@v2.0.1
+        with:
+          compose-file: "./docker-compose.yml"
