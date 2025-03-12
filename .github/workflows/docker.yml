@@ -12,3 +12,16 @@ jobs:
     steps:
       - name: Set up Docker Compose
         uses: docker/setup-compose-action@v1
+
+      - name: Build and start services
+        run: |
+          docker-compose -f docker-compose.yml up --build -d
+
+
+      - name: Wait for services to be ready
+        run: |
+          docker-compose exec backend curl -f http://localhost || exit 1
+          docker-compose exec nginx curl -f http://localhost || exit 1
+
+      - name: Tear down the services
+        run: docker-compose down
