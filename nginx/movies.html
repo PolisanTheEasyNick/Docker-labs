@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movies List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            width: 60%;
+            margin: auto;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #555;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .form-container {
+            margin: 20px 0;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Movies List</h1>
+
+    <div class="form-container">
+        <h2>Add Movie</h2>
+        <input type="text" id="addTitle" placeholder="Title" />
+        <input type="number" id="addYear" placeholder="Year" />
+        <button onclick="addMovie()">Add Movie</button>
+    </div>
+
+    <div class="form-container">
+        <h2>Edit Movie</h2>
+        <input type="number" id="editId" placeholder="Movie ID" />
+        <input type="text" id="editTitle" placeholder="Title" />
+        <input type="number" id="editYear" placeholder="Year" />
+        <button onclick="editMovie()">Edit Movie</button>
+    </div>
+
+    <div class="form-container">
+        <h2>Remove Movie</h2>
+        <input type="number" id="removeId" placeholder="Movie ID" />
+        <button onclick="removeMovie()">Remove Movie</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Year</th>
+            </tr>
+        </thead>
+        <tbody id="movies"></tbody>
+    </table>
+
+    <script>
+        // Fetch all movies and populate the table
+        function fetchMovies() {
+            fetch("/backend/all_movies")
+                .then(response => response.json())
+                .then(data => {
+                    const moviesTable = document.getElementById("movies");
+                    moviesTable.innerHTML = '';  // Clear the table
+                    data.forEach(movie => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `<td>${movie.id}</td><td>${movie.title}</td><td>${movie.year}</td>`;
+                        moviesTable.appendChild(row);
+                    });
+                })
+                .catch(error => console.error("Error fetching movies:", error));
+        }
+
+        // Add a new movie
+        function addMovie() {
+            const title = document.getElementById("addTitle").value;
+            const year = document.getElementById("addYear").value;
+
+            if (!title || !year) {
+                alert("Please provide both title and year.");
+                return;
+            }
+
+            fetch("/backend/add_movie?title=" + title + "&year=" + year, {
+                method: "POST"
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchMovies();  // Reload the movie list
+            })
+            .catch(error => console.error("Error adding movie:", error));
+        }
+
+        // Edit a movie
+        function editMovie() {
+            const id = document.getElementById("editId").value;
+            const title = document.getElementById("editTitle").value;
+            const year = document.getElementById("editYear").value;
+
+            if (!id || !title || !year) {
+                alert("Please provide ID, title, and year.");
+                return;
+            }
+
+            fetch(`/backend/edit_movie?id=${id}&title=${title}&year=${year}`, {
+                method: "PUT"
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchMovies();  // Reload the movie list
+            })
+            .catch(error => console.error("Error editing movie:", error));
+        }
+
+        // Remove a movie
+        function removeMovie() {
+            const id = document.getElementById("removeId").value;
+
+            if (!id) {
+                alert("Please provide movie ID.");
+                return;
+            }
+
+            fetch(`/backend/remove_movie?id=${id}`, {
+                method: "DELETE"
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                fetchMovies();  // Reload the movie list
+            })
+            .catch(error => console.error("Error removing movie:", error));
+        }
+
+        // Initial load of movies
+        fetchMovies();
+    </script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+version: '3.8'
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - "8082:80"
+    depends_on:
+      - mysql
+      - backend
+    networks:
+      - app-network
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+
+  backend:
+    build: ./backend
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: movies_db
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+  tests:
+    build: ./tests
+    working_dir: /app
+    volumes:
+      - ./tests:/app
+    depends_on:
+      - mysql
+      - backend
+    command: >
+      sh -c '
+        until nc -z -v -w30 mysql 3306; do
+          echo "Waiting for MySQL to be ready...";
+          sleep 5;
+        done;
+        python test.py'
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
