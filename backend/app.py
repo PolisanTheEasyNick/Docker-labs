@@ -1,21 +1,28 @@
 from flask import Flask, request, jsonify
 import mysql.connector
 import os
+from prometheus_flask_exporter import PrometheusMetrics
+
 
 app = Flask(__name__)
 
-MYSQL_HOST = os.getenv('MYSQL_HOST', 'mysql')
-MYSQL_USER = os.getenv('MYSQL_USER', 'root')
-MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'password')
-MYSQL_DATABASE = os.getenv('MYSQL_DATABASE', 'movies_db')
+MYSQL_HOST = os.getenv("MYSQL_HOST", "mysql")
+MYSQL_USER = os.getenv("MYSQL_USER", "root")
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "password")
+MYSQL_DATABASE = os.getenv("MYSQL_DATABASE", "movies_db")
+
+metrics = PrometheusMetrics(app)
+metrics.info("app_info", "Movie backend application", version="1.0.0")
+
 
 def get_db_connection():
     return mysql.connector.connect(
         host=MYSQL_HOST,
         user=MYSQL_USER,
         password=MYSQL_PASSWORD,
-        database=MYSQL_DATABASE
+        database=MYSQL_DATABASE,
     )
+
 
 @app.route("/backend/all_movies", methods=["GET"])
 def get_movies():
@@ -29,6 +36,7 @@ def get_movies():
         return jsonify(movies)
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
+
 
 @app.route("/backend/add_movie", methods=["POST"])
 def add_movie():
@@ -48,6 +56,7 @@ def add_movie():
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
 
+
 @app.route("/backend/remove_movie", methods=["DELETE"])
 def remove_movie():
     movie_id = request.args.get("id")
@@ -65,6 +74,7 @@ def remove_movie():
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
 
+
 @app.route("/backend/edit_movie", methods=["PUT"])
 def edit_movie():
     movie_id = request.args.get("id")
@@ -76,13 +86,17 @@ def edit_movie():
     try:
         db = get_db_connection()
         cursor = db.cursor()
-        cursor.execute("UPDATE movie SET title = %s, year = %s WHERE id = %s", (title, year, movie_id))
+        cursor.execute(
+            "UPDATE movie SET title = %s, year = %s WHERE id = %s",
+            (title, year, movie_id),
+        )
         db.commit()
         cursor.close()
         db.close()
         return jsonify({"message": "Movie updated"})
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80)

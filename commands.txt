@@ -18,3 +18,7 @@ docker build -t movie-nginx:latest ./nginx
 
 kubectl apply -f k8s/deployment.yml
 minikube service nginx --url
+
+restart:
+kubectl rollout restart deployment backend
+minikube service list
