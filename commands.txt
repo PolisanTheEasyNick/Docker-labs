@@ -1,0 +1,20 @@
+minikube start --driver=docker
+
+
+eval $(minikube docker-env)
+docker build -t movie-backend:latest ./backend
+docker build -t movie-nginx:latest ./nginx
+docker build -t movie-tests:latest ./tests
+
+kubectl apply -f k8s/mysql.yaml
+kubectl apply -f k8s/backend.yaml
+kubectl apply -f k8s/nginx.yaml
+kubectl apply -f k8s/tests-job.yaml
+
+--------------
+eval $(minikube docker-env)
+docker build -t movie-backend:latest ./backend
+docker build -t movie-nginx:latest ./nginx
+
+kubectl apply -f k8s/deployment.yml
+minikube service nginx --url

@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: test-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: tests
+        image: movie-tests:latest
+        imagePullPolicy: Never
+        command: ["sh", "-c"]
+        args:
+          - |
+            until nc -z -v -w30 mysql 3306; do
+              echo "Waiting for MySQL...";
+              sleep 5;
+            done;
+            python test.py
+      restartPolicy: Never
+  backoffLimit: 2
